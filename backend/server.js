@@ -196,7 +196,31 @@ app.post("/api/offers/:id/accept", (req, res) => {
   res.json({ invoice, offer });
 });
 
-// 8. Settle an invoice (Repayment complete)
+// 8. Confirm an invoice (Buyer Portal)
+app.post("/api/invoices/:id/confirm", (req, res) => {
+  const invoice = data.invoices.find(i => i.id === req.params.id);
+  if (!invoice) {
+    return res.status(404).json({ error: "Invoice not found" });
+  }
+  
+  if (invoice.verificationDetails.buyerConfirmed) {
+    return res.status(400).json({ error: "Invoice already confirmed by buyer" });
+  }
+
+  invoice.verificationDetails.buyerConfirmed = true;
+  invoice.verificationStatus = "VERIFIED";
+  // Recalculate risk (simplified)
+  invoice.riskScore = Math.max(5, invoice.riskScore - 15); // Decrease risk score
+  
+  addLog("BUYER_CONFIRMATION", `Buyer ${invoice.buyerName} digitally confirmed liability for ${invoice.id}. Risk score reduced to ${invoice.riskScore}.`);
+  
+  // Re-run matching to see if new auto-bids trigger due to lower risk
+  matchAndGenerateOffers(invoice);
+  
+  res.json(invoice);
+});
+
+// 9. Settle an invoice (Repayment complete)
 app.post("/api/invoices/:id/settle", (req, res) => {
   const invoice = data.invoices.find(i => i.id === req.params.id);
   if (!invoice) {

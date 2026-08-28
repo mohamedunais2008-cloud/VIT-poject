@@ -55,19 +55,6 @@ function SupplierDashboard({ invoices, offers, fetchData }) {
     }
   };
 
-  const handleSettleInvoice = async (invoiceId) => {
-    try {
-      const response = await fetch(`/api/invoices/${invoiceId}/settle`, {
-        method: 'POST'
-      });
-      if (response.ok) {
-        fetchData();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // Get status color helper
   const getStatusBadge = (status) => {
     switch (status) {
@@ -216,12 +203,9 @@ function SupplierDashboard({ invoices, offers, fetchData }) {
                   <p className="text-xs text-slate-400 mt-1">Submitted by <strong className="text-slate-300">{selectedInvoice.supplierName}</strong> matching buyer <strong className="text-slate-300">{selectedInvoice.buyerName}</strong></p>
                 </div>
                 {selectedInvoice.status === 'FINANCED' && (
-                  <button
-                    onClick={() => handleSettleInvoice(selectedInvoice.id)}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
-                  >
-                    Simulate Buyer Settlement
-                  </button>
+                  <div className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                    Waiting for Buyer Repayment
+                  </div>
                 )}
                 {selectedInvoice.status === 'SETTLED' && (
                   <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg text-xs font-semibold">

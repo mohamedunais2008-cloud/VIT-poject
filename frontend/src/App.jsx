@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import LoginScreen from './components/LoginScreen';
 import SupplierDashboard from './components/SupplierDashboard';
 import ProviderDashboard from './components/ProviderDashboard';
 import AdminDashboard from './components/AdminDashboard';
-import { Terminal, Landmark, ShieldCheck, Activity, Award } from 'lucide-react';
+import BuyerDashboard from './components/BuyerDashboard';
+import { Terminal, Landmark, ShieldCheck, Activity, Award, LogOut, Building2 } from 'lucide-react';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('supplier');
+  const [currentUserRole, setCurrentUserRole] = useState(null); // 'supplier', 'buyer', 'provider', 'admin'
   const [invoices, setInvoices] = useState([]);
   const [providers, setProviders] = useState([]);
   const [offers, setOffers] = useState([]);
@@ -47,6 +49,26 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const getRoleTitle = (role) => {
+    switch (role) {
+      case 'supplier': return 'Supplier Portal';
+      case 'buyer': return 'Corporate Buyer';
+      case 'provider': return 'Funder Workspace';
+      case 'admin': return 'Admin Control Room';
+      default: return '';
+    }
+  };
+  
+  const getRoleIcon = (role) => {
+    switch (role) {
+      case 'supplier': return <ShieldCheck className="w-4 h-4" />;
+      case 'buyer': return <Building2 className="w-4 h-4" />;
+      case 'provider': return <Landmark className="w-4 h-4" />;
+      case 'admin': return <Terminal className="w-4 h-4" />;
+      default: return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none">
       {/* Dynamic Activity Top Bar */}
@@ -81,46 +103,25 @@ function App() {
           </div>
         </div>
 
-        {/* Tab Controls */}
-        <div className="flex bg-slate-950/80 p-1.5 rounded-xl border border-slate-800">
-          <button
-            onClick={() => setActiveTab('supplier')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all ${
-              activeTab === 'supplier'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4" />
-            Supplier Portal (MSME)
-          </button>
-          <button
-            onClick={() => setActiveTab('provider')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all ${
-              activeTab === 'provider'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Landmark className="w-4 h-4" />
-            Funder Workspace
-          </button>
-          <button
-            onClick={() => setActiveTab('admin')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide tracking-tight transition-all ${
-              activeTab === 'admin'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Terminal className="w-4 h-4" />
-            Admin Control Room
-          </button>
-        </div>
+        {/* Current Role Indicator & Logout */}
+        {currentUserRole && (
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-indigo-600/20 border border-indigo-500/30 px-4 py-2 rounded-lg text-indigo-300 text-sm font-semibold">
+              {getRoleIcon(currentUserRole)}
+              {getRoleTitle(currentUserRole)}
+            </div>
+            <button
+              onClick={() => setCurrentUserRole(null)}
+              className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-xs font-semibold uppercase tracking-wider"
+            >
+              <LogOut className="w-4 h-4" /> Logout
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Log Activity Ticker */}
-      {logs.length > 0 && (
+      {logs.length > 0 && currentUserRole === 'admin' && (
         <div className="bg-slate-950 border-b border-slate-900 px-6 py-2 flex items-center gap-3 text-xs overflow-hidden">
           <div className="flex items-center gap-1.5 text-indigo-400 shrink-0 font-semibold uppercase tracking-wider">
             <Activity className="w-3.5 h-3.5 animate-pulse" />
@@ -145,30 +146,24 @@ function App() {
             </p>
           </div>
         ) : (
-          <div className="animate-fade-in">
-            {activeTab === 'supplier' && (
-              <SupplierDashboard 
-                invoices={invoices} 
-                offers={offers} 
-                fetchData={fetchData} 
-              />
-            )}
-            {activeTab === 'provider' && (
-              <ProviderDashboard 
-                invoices={invoices} 
-                providers={providers}
-                offers={offers} 
-                fetchData={fetchData} 
-              />
-            )}
-            {activeTab === 'admin' && (
-              <AdminDashboard 
-                invoices={invoices} 
-                providers={providers}
-                offers={offers} 
-                logs={logs}
-                fetchData={fetchData} 
-              />
+          <div className="animate-fade-in h-full">
+            {!currentUserRole ? (
+              <LoginScreen onLogin={setCurrentUserRole} />
+            ) : (
+              <>
+                {currentUserRole === 'supplier' && (
+                  <SupplierDashboard invoices={invoices} offers={offers} fetchData={fetchData} />
+                )}
+                {currentUserRole === 'buyer' && (
+                  <BuyerDashboard invoices={invoices} fetchData={fetchData} />
+                )}
+                {currentUserRole === 'provider' && (
+                  <ProviderDashboard invoices={invoices} providers={providers} offers={offers} fetchData={fetchData} />
+                )}
+                {currentUserRole === 'admin' && (
+                  <AdminDashboard invoices={invoices} providers={providers} offers={offers} logs={logs} fetchData={fetchData} />
+                )}
+              </>
             )}
           </div>
         )}
