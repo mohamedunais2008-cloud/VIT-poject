@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import LoginScreen from './components/LoginScreen';
+import LandingPage from './components/LandingPage';
+import AuthScreen from './components/AuthScreen';
 import SupplierDashboard from './components/SupplierDashboard';
 import ProviderDashboard from './components/ProviderDashboard';
 import AdminDashboard from './components/AdminDashboard';
@@ -7,7 +8,10 @@ import BuyerDashboard from './components/BuyerDashboard';
 import { Terminal, Landmark, ShieldCheck, Activity, Award, LogOut, Building2 } from 'lucide-react';
 
 function App() {
+  // 'landing' -> 'auth' -> 'dashboard'
+  const [appState, setAppState] = useState('landing'); 
   const [currentUserRole, setCurrentUserRole] = useState(null); // 'supplier', 'buyer', 'provider', 'admin'
+  
   const [invoices, setInvoices] = useState([]);
   const [providers, setProviders] = useState([]);
   const [offers, setOffers] = useState([]);
@@ -69,8 +73,29 @@ function App() {
     }
   };
 
+  const handleLogin = (role) => {
+    setCurrentUserRole(role);
+    setAppState('dashboard');
+  };
+
+  const handleLogout = () => {
+    setCurrentUserRole(null);
+    setAppState('auth');
+  };
+
+  // 1. Landing Page State
+  if (appState === 'landing') {
+    return <LandingPage onEnter={() => setAppState('auth')} />;
+  }
+
+  // 2. Auth Screen State
+  if (appState === 'auth') {
+    return <AuthScreen onLogin={handleLogin} />;
+  }
+
+  // 3. Dashboard State
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-x-hidden">
       {/* Dynamic Activity Top Bar */}
       <div className="bg-slate-900 border-b border-slate-800 text-xs px-4 py-2 flex items-center justify-between text-slate-400">
         <div className="flex items-center gap-2">
@@ -106,12 +131,12 @@ function App() {
         {/* Current Role Indicator & Logout */}
         {currentUserRole && (
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-indigo-600/20 border border-indigo-500/30 px-4 py-2 rounded-lg text-indigo-300 text-sm font-semibold">
+            <div className="flex items-center gap-2 bg-indigo-600/20 border border-indigo-500/30 px-4 py-2 rounded-lg text-indigo-300 text-sm font-semibold shadow-[0_0_15px_rgba(79,70,229,0.15)]">
               {getRoleIcon(currentUserRole)}
               {getRoleTitle(currentUserRole)}
             </div>
             <button
-              onClick={() => setCurrentUserRole(null)}
+              onClick={handleLogout}
               className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-xs font-semibold uppercase tracking-wider"
             >
               <LogOut className="w-4 h-4" /> Logout
@@ -147,23 +172,17 @@ function App() {
           </div>
         ) : (
           <div className="animate-fade-in h-full">
-            {!currentUserRole ? (
-              <LoginScreen onLogin={setCurrentUserRole} />
-            ) : (
-              <>
-                {currentUserRole === 'supplier' && (
-                  <SupplierDashboard invoices={invoices} offers={offers} fetchData={fetchData} />
-                )}
-                {currentUserRole === 'buyer' && (
-                  <BuyerDashboard invoices={invoices} fetchData={fetchData} />
-                )}
-                {currentUserRole === 'provider' && (
-                  <ProviderDashboard invoices={invoices} providers={providers} offers={offers} fetchData={fetchData} />
-                )}
-                {currentUserRole === 'admin' && (
-                  <AdminDashboard invoices={invoices} providers={providers} offers={offers} logs={logs} fetchData={fetchData} />
-                )}
-              </>
+            {currentUserRole === 'supplier' && (
+              <SupplierDashboard invoices={invoices} offers={offers} fetchData={fetchData} />
+            )}
+            {currentUserRole === 'buyer' && (
+              <BuyerDashboard invoices={invoices} fetchData={fetchData} />
+            )}
+            {currentUserRole === 'provider' && (
+              <ProviderDashboard invoices={invoices} providers={providers} offers={offers} fetchData={fetchData} />
+            )}
+            {currentUserRole === 'admin' && (
+              <AdminDashboard invoices={invoices} providers={providers} offers={offers} logs={logs} fetchData={fetchData} />
             )}
           </div>
         )}
